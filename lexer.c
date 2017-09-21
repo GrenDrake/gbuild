@@ -46,8 +46,17 @@ int lex_file(const char *filename) {
 }
 
 
+/*
+Return the previous character, or 0 if we're at the start of the string.
+*/
 #define PREV() (pos - 1 > 0 ? text[pos-1] : 0)
+/*
+Return the current character, or 0 if we're at the end of the string.
+*/
 #define HERE() (pos < length ? text[pos] : 0)
+/*
+Advance our position in the string by one and update the line and column numbers appropriately.
+*/
 #define NEXT() (pos < length ? (++pos,++column, (pos<length&&text[pos]=='\n') ? (++line,column=0) : 0) : 0)
 
 /*
