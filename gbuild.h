@@ -30,9 +30,6 @@ typedef struct TOKEN_LIST {
 
 tokenlist_t* lex_file(const char *filename);
 tokenlist_t* lex_string(const char *filename, const char *text, size_t length);
-
-lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
-void add_token(tokenlist_t *tokens, lexertoken_t *token);
 void free_tokens(tokenlist_t *tokens);
 
 #endif

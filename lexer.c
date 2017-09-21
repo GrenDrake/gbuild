@@ -13,7 +13,12 @@ typedef struct LEXER_STATE {
     size_t column;
 } lexerstate_t;
 
+void add_token(tokenlist_t *tokens, lexertoken_t *token);
+int here(const lexerstate_t *state);
 int is_identifier(char what, int first_char);
+void next(lexerstate_t *state);
+lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
+int prev(const lexerstate_t *state);
 char *strdup (const char *source_string);
 
 /*
