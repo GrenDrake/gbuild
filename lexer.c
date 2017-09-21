@@ -5,6 +5,14 @@
 
 #include "gbuild.h"
 
+typedef struct LEXER_STATE {
+    const char *text;
+    size_t length;
+    size_t pos;
+    size_t line;
+    size_t column;
+} lexerstate_t;
+
 int is_identifier(char what, int first_char);
 char *strdup (const char *source_string);
 
@@ -49,74 +57,98 @@ int lex_file(const char *filename) {
 /*
 Return the previous character, or 0 if we're at the start of the string.
 */
-#define PREV() (pos - 1 > 0 ? text[pos-1] : 0)
+int prev(const lexerstate_t *state) {
+    if (state->pos > 0) {
+        return state->text[state->pos-1];
+    } else {
+        return 0;
+    }
+}
 /*
 Return the current character, or 0 if we're at the end of the string.
 */
-#define HERE() (pos < length ? text[pos] : 0)
+int here(const lexerstate_t *state) {
+    if (state->pos < state->length) {
+        return state->text[state->pos];
+    } else {
+        return 0;
+    }
+}
 /*
 Advance our position in the string by one and update the line and column numbers appropriately.
 */
-#define NEXT() (pos < length ? (++pos,++column, (pos<length&&text[pos]=='\n') ? (++line,column=0) : 0) : 0)
+void next(lexerstate_t *state) {
+    if (state->pos < state->length) {
+        ++state->pos;
+        ++state->column;
+        if (here(state) == '\n') {
+            state->column = 1;
+            ++state->line;
+        }
+    }
+}
 
 /*
 Convert a string into a sequence of tokens and add them to the global token list.
 */
 int lex_string(const char *filename, const char *text, size_t length) {
-    size_t line = 1;
-    size_t column = 1;
-    size_t pos = 0;
+    lexerstate_t state;
+    state.text = text;
+    state.length = length;
+    state.line = 1;
+    state.column = 1;
+    state.pos = 0;
 
-    while (pos < length) {
-        while (isspace(HERE())) {
-            NEXT();
+    while (state.pos < state.length) {
+        while (isspace(here(&state))) {
+            next(&state);
         }
 
-        if (is_identifier(HERE(), 1)) {
-            size_t token_line = line, token_column = column;
-            size_t start = pos;
-            while(is_identifier(HERE(), 0)) {
-                NEXT();
+        if (is_identifier(here(&state), 1)) {
+            size_t token_line = state.line, token_column = state.column;
+            size_t start = state.pos;
+            while(is_identifier(here(&state), 0)) {
+                next(&state);
             }
-            int ident_size = pos - start;
+            int ident_size = state.pos - start;
             char *token_text = malloc(ident_size + 1);
-            strncpy(token_text, &text[start], ident_size);
+            strncpy(token_text, &state.text[start], ident_size);
             token_text[ident_size] = 0;
 
             lexertoken_t *ident_token = new_token(IDENTIFIER, filename, token_line, token_column);
             ident_token->text = token_text;
             add_token(ident_token);
-        } else if (HERE() == '"') {
-            size_t token_line = line, token_column = column;
-            NEXT();
-            size_t start = pos;
-            while(HERE() != '"' || PREV() == '\\') {
-                NEXT();
+        } else if (here(&state) == '"') {
+            size_t token_line = state.line, token_column = state.column;
+            next(&state);
+            size_t start = state.pos;
+            while(here(&state) != '"' || prev(&state) == '\\') {
+                next(&state);
             }
-            int string_size = pos - start;
-            NEXT();
+            int string_size = state.pos - start;
+            next(&state);
             char *string_text = malloc(string_size + 1);
-            strncpy(string_text, &text[start], string_size);
+            strncpy(string_text, &state.text[start], string_size);
             string_text[string_size] = 0;
 
             lexertoken_t *string_token = new_token(STRING, filename, token_line, token_column);
             string_token->text = string_text;
             add_token(string_token);
-        } else if (isdigit(HERE())) {
-            size_t token_line = line, token_column = column;
+        } else if (isdigit(here(&state))) {
+            size_t token_line = state.line, token_column = state.column;
             int number = 0;
             do {
-                int digit_value = HERE() - '0';
+                int digit_value = here(&state) - '0';
                 number *= 10;
                 number += digit_value;
-                NEXT();
-            } while(isdigit(HERE()));
+                next(&state);
+            } while(isdigit(here(&state)));
 
             lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
             ident_token->integer = number;
             add_token(ident_token);
         } else {
-            NEXT();
+            next(&state);
         }
     }
     return 1;
