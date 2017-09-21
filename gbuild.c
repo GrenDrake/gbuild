@@ -4,16 +4,17 @@
 
 int main(int argc, char *argv[]) {
 
-
-    if (!lex_file("source.txt")) {
+    tokenlist_t *list = lex_file("source.txt");
+    if (!list) {
         fprintf(stderr, "FATAL: errors occured during lexing.\n");
     }
 
-    if (!first_token) {
+    if (!list->first) {
+        printf("no tokens found\n");
         return 1;
     }
 
-    lexertoken_t *work = first_token;
+    lexertoken_t *work = list->first;
     while (work) {
         printf("%2i ", work->type);
         if (work->type == IDENTIFIER || work->type == STRING) {
@@ -25,6 +26,6 @@ int main(int argc, char *argv[]) {
         work = work->next;
     }
 
-    free_tokens();
+    free_tokens(list);
     return 0;
 }

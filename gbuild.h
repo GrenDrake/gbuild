@@ -23,13 +23,16 @@ typedef struct LEXER_TOKEN {
     struct LEXER_TOKEN *next;
 } lexertoken_t;
 
-int lex_file(const char *filename);
-int lex_string(const char *filename, const char *text, size_t length);
+typedef struct TOKEN_LIST {
+    lexertoken_t *first;
+    lexertoken_t *last;
+} tokenlist_t;
+
+tokenlist_t* lex_file(const char *filename);
+tokenlist_t* lex_string(const char *filename, const char *text, size_t length);
 
 lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
-void add_token(lexertoken_t *token);
-void free_tokens();
-
-extern lexertoken_t *first_token, *last_token;
+void add_token(tokenlist_t *tokens, lexertoken_t *token);
+void free_tokens(tokenlist_t *tokens);
 
 #endif

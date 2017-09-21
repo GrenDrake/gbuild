@@ -16,8 +16,6 @@ typedef struct LEXER_STATE {
 int is_identifier(char what, int first_char);
 char *strdup (const char *source_string);
 
-lexertoken_t *first_token = 0, *last_token = 0;
-
 /*
 Duplicate and return a character string.
 */
@@ -33,7 +31,7 @@ char *strdup (const char *source_string) {
 /*
 Convert the contents of a file into a series of tokens and add them to the global token list.
 */
-int lex_file(const char *filename) {
+tokenlist_t* lex_file(const char *filename) {
     FILE *fp = fopen(filename, "rt");
     if (!fp) {
         fprintf(stderr, "Could not open file \"%s\"\n", filename);
@@ -48,7 +46,7 @@ int lex_file(const char *filename) {
     fread(filedata, readsize, 1, fp);
     filedata[readsize] = 0;
 
-    int result = lex_string(filename, filedata, readsize);
+    tokenlist_t *result = lex_string(filename, filedata, readsize);
     free(filedata);
     return result;
 }
@@ -91,13 +89,15 @@ void next(lexerstate_t *state) {
 /*
 Convert a string into a sequence of tokens and add them to the global token list.
 */
-int lex_string(const char *filename, const char *text, size_t length) {
+tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
     lexerstate_t state;
     state.text = text;
     state.length = length;
     state.line = 1;
     state.column = 1;
     state.pos = 0;
+    
+    tokenlist_t *tokens = calloc(sizeof(tokenlist_t), 1);
 
     while (state.pos < state.length) {
         while (isspace(here(&state))) {
@@ -117,7 +117,7 @@ int lex_string(const char *filename, const char *text, size_t length) {
 
             lexertoken_t *ident_token = new_token(IDENTIFIER, filename, token_line, token_column);
             ident_token->text = token_text;
-            add_token(ident_token);
+            add_token(tokens, ident_token);
         } else if (here(&state) == '"') {
             size_t token_line = state.line, token_column = state.column;
             next(&state);
@@ -133,7 +133,7 @@ int lex_string(const char *filename, const char *text, size_t length) {
 
             lexertoken_t *string_token = new_token(STRING, filename, token_line, token_column);
             string_token->text = string_text;
-            add_token(string_token);
+            add_token(tokens, string_token);
         } else if (isdigit(here(&state))) {
             size_t token_line = state.line, token_column = state.column;
             int number = 0;
@@ -146,12 +146,12 @@ int lex_string(const char *filename, const char *text, size_t length) {
 
             lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
             ident_token->integer = number;
-            add_token(ident_token);
+            add_token(tokens, ident_token);
         } else {
             next(&state);
         }
     }
-    return 1;
+    return tokens;
 }
 
 
@@ -186,16 +186,16 @@ lexertoken_t* new_token(int type, const char *filename, int line_no, int col_no)
 /*
 Add an existing lexer token to the global linked list of lexer tokens.
 */
-void add_token(lexertoken_t *token) {
-    if (!first_token) {
-        first_token = token;
-        last_token = token;
+void add_token(tokenlist_t *tokens, lexertoken_t *token) {
+    if (!tokens->first) {
+        tokens->first = token;
+        tokens->last = token;
         token->next = 0;
         token->prev = 0;
     } else {
-        last_token->next = token;
-        token->prev = last_token;
-        last_token = token;
+        tokens->last->next = token;
+        token->prev = tokens->last;
+        tokens->last = token;
     }
 }
 
@@ -203,8 +203,8 @@ void add_token(lexertoken_t *token) {
 /*
 Free memory used by all tokens on the global linked list.
 */
-void free_tokens() {
-    lexertoken_t *token = first_token;
+void free_tokens(tokenlist_t *tokens) {
+    lexertoken_t *token = tokens->first;
     while (token) {
         lexertoken_t *next = token->next;
         if (token->type == IDENTIFIER || token->type == STRING) {
@@ -214,4 +214,5 @@ void free_tokens() {
         free(token);
         token = next;
     }
+    free(tokens);
 }
