@@ -97,7 +97,25 @@ tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
             next(&state);
         }
 
-        if (is_identifier(here(&state), 1)) {
+        if (here(&state) == ',') {
+            add_token(tokens, new_token(COMMA, filename, state.line, state.column));
+            next(&state);
+        } else if (here(&state) == ';') {
+            add_token(tokens, new_token(SEMICOLON, filename, state.line, state.column));
+            next(&state);
+        } else if (here(&state) == '(') {
+            add_token(tokens, new_token(OPEN_PARAN, filename, state.line, state.column));
+            next(&state);
+        } else if (here(&state) == ')') {
+            add_token(tokens, new_token(CLOSE_PARAN, filename, state.line, state.column));
+            next(&state);
+        } else if (here(&state) == '{') {
+            add_token(tokens, new_token(OPEN_BRACE, filename, state.line, state.column));
+            next(&state);
+        } else if (here(&state) == '}') {
+            add_token(tokens, new_token(CLOSE_BRACE, filename, state.line, state.column));
+            next(&state);
+        } else if (is_identifier(here(&state), 1)) {
             size_t token_line = state.line, token_column = state.column;
             size_t start = state.pos;
             while(is_identifier(here(&state), 0)) {
@@ -144,6 +162,8 @@ tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
             ident_token->integer = number;
             add_token(tokens, ident_token);
         } else {
+            fprintf(stderr, "LEXER: unexpected '%c' (%d)\n", 
+                    here(&state), here(&state));
             next(&state);
         }
     }

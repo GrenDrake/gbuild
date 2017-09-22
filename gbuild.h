@@ -8,13 +8,20 @@
 #define MNE_RESIZE         0x08
 
 enum tokentype_t {
+    UNKNOWN,
     IDENTIFIER,
     RESERVED,
     INTEGER,
     FLOAT,
     STRING,
     CHAR,
-    DICT_WORD
+    DICT_WORD,
+    OPEN_PARAN,
+    CLOSE_PARAN,
+    OPEN_BRACE,
+    CLOSE_BRACE,
+    COMMA,
+    SEMICOLON
 };
 
 typedef struct ASM_MNEMONIC {
