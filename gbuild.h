@@ -1,7 +1,11 @@
 #ifndef GBUILD_H
 #define GBUILD_H
 
-#define MAX_PROJECT_FILES 16
+#define MAX_PROJECT_FILES  16
+#define MNE_RELJUMP        0x01
+#define MNE_FLOAT          0x02
+#define MNE_MALLOC         0x04
+#define MNE_RESIZE         0x08
 
 enum tokentype_t {
     IDENTIFIER,
@@ -12,6 +16,13 @@ enum tokentype_t {
     CHAR,
     DICT_WORD
 };
+
+typedef struct ASM_MNEMONIC {
+    const char *mnemonic;
+    int opcode;
+    int operands;
+    int flags;
+} mnemonic_t;
 
 typedef struct PROJECT {
     char *project_file;
@@ -50,5 +61,6 @@ void free_tokens(tokenlist_t *tokens);
 
 char *strdup (const char *source_string);
 int is_reserved_word(const char *word);
+mnemonic_t* get_mnemonic(const char *name);
 
 #endif
