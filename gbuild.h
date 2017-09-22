@@ -8,6 +8,12 @@ enum tokentype_t {
     STRING
 };
 
+typedef struct PROJECT {
+    char *project_file;
+    int switches;
+    char **files;
+} project_t;
+
 typedef struct LEXER_TOKEN {
     int type;
     const char *filename;
@@ -27,6 +33,9 @@ typedef struct TOKEN_LIST {
     lexertoken_t *first;
     lexertoken_t *last;
 } tokenlist_t;
+
+project_t* open_project(const char *project_file);
+void free_project(project_t *project);
 
 tokenlist_t* lex_file(const char *filename);
 tokenlist_t* lex_string(const char *filename, const char *text, size_t length);
