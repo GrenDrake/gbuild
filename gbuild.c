@@ -17,6 +17,20 @@ char *strdup (const char *source_string) {
 
 int main(int argc, char *argv[]) {
 
+    const char *project_file = "test.gproj";
+    project_t *project = open_project(project_file);
+    if (!project) {
+        fprintf(stderr, "FATAL: could not open project file \"%s\".\n", 
+                project_file);
+        return 1;
+    }
+
+    int i = 0;
+    while(project->files[i]) {
+        printf("   %s\n", project->files[i]);
+        ++i;
+    }
+
     tokenlist_t *list = lex_file("source.txt");
     if (!list) {
         fprintf(stderr, "FATAL: errors occured during lexing.\n");
@@ -40,5 +54,6 @@ int main(int argc, char *argv[]) {
     }
 
     free_tokens(list);
+    free_project(project);
     return 0;
 }

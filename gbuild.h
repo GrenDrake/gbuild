@@ -1,6 +1,8 @@
 #ifndef GBUILD_H
 #define GBUILD_H
 
+#define MAX_PROJECT_FILES 16
+
 enum tokentype_t {
     IDENTIFIER,
     INTEGER,
@@ -10,8 +12,9 @@ enum tokentype_t {
 
 typedef struct PROJECT {
     char *project_file;
-    int switches;
-    char **files;
+    unsigned int switches;
+    unsigned int file_count;
+    char *files[MAX_PROJECT_FILES];
 } project_t;
 
 typedef struct LEXER_TOKEN {
