@@ -2,6 +2,19 @@
 
 #include "gbuild.h"
 
+/*
+Duplicate and return a character string.
+*/
+char *strdup (const char *source_string) {
+    char *new_string = malloc(strlen(source_string) + 1);
+    if (new_string == 0) {
+        return 0;
+    }
+    strcpy(new_string, source_string);
+    return new_string;
+}
+
+
 int main(int argc, char *argv[]) {
 
     tokenlist_t *list = lex_file("source.txt");

@@ -19,19 +19,6 @@ int is_identifier(char what, int first_char);
 void next(lexerstate_t *state);
 lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
 int prev(const lexerstate_t *state);
-char *strdup (const char *source_string);
-
-/*
-Duplicate and return a character string.
-*/
-char *strdup (const char *source_string) {
-    char *new_string = malloc(strlen(source_string) + 1);
-    if (new_string == 0) {
-        return 0;
-    }
-    strcpy(new_string, source_string);
-    return new_string;
-}
 
 /*
 Convert the contents of a file into a series of tokens and add them to the global token list.

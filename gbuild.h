@@ -32,4 +32,6 @@ tokenlist_t* lex_file(const char *filename);
 tokenlist_t* lex_string(const char *filename, const char *text, size_t length);
 void free_tokens(tokenlist_t *tokens);
 
+char *strdup (const char *source_string);
+
 #endif
