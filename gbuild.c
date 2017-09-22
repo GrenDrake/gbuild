@@ -25,16 +25,24 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    tokenlist_t *list = 0;
     int i = 0;
     while(project->files[i]) {
-        printf("   %s\n", project->files[i]);
+        tokenlist_t *newlist = lex_file(project->files[i]);
+        if (!newlist) {
+            fprintf(stderr, "FATAL: errors occured while lexing file \"%s\".\n",
+                    project->files[i]);
+            free_tokens(list);
+            return 2;
+        }
+        if (list) {
+            list = merge_tokens(list, newlist);
+        } else {
+            list = newlist;
+        }
         ++i;
     }
 
-    tokenlist_t *list = lex_file("source.txt");
-    if (!list) {
-        fprintf(stderr, "FATAL: errors occured during lexing.\n");
-    }
 
     if (!list->first) {
         printf("no tokens found\n");

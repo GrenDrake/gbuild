@@ -193,6 +193,32 @@ void add_token(tokenlist_t *tokens, lexertoken_t *token) {
 
 
 /*
+Merge two token lists by appendinv the second to the first and
+return the resulting lists. Both input lists should be considered
+invalidated and inaccessable; memory will be automatically freed
+if required.
+*/
+tokenlist_t* merge_tokens(tokenlist_t *first, tokenlist_t *second) {
+    if (first == 0) return second;
+    if (second == 0) return first;
+    
+    if (first->first == 0) {
+        free(first);
+        return second;
+    }
+    if (second->first == 0) {
+        free(second);
+        return first;
+    }
+    
+    first->last->next = second->first;
+    second->first->prev = first->last;
+    first->last = second->last;
+    free(second);
+    return first;
+}
+
+/*
 Free memory used by all tokens on the global linked list.
 */
 void free_tokens(tokenlist_t *tokens) {

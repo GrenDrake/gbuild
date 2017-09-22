@@ -42,6 +42,7 @@ void free_project(project_t *project);
 
 tokenlist_t* lex_file(const char *filename);
 tokenlist_t* lex_string(const char *filename, const char *text, size_t length);
+tokenlist_t* merge_tokens(tokenlist_t *first, tokenlist_t *second);
 void free_tokens(tokenlist_t *tokens);
 
 char *strdup (const char *source_string);
