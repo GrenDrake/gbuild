@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -g --std=c99
-OBJS=gbuild.o lexer.o project.o
+OBJS=gbuild.o data.o lexer.o project.o
 
 all: gbuild
 

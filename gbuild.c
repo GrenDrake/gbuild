@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     lexertoken_t *work = list->first;
     while (work) {
         printf("%2i ", work->type);
-        if (work->type == IDENTIFIER || work->type == STRING) {
+        if (work->type == IDENTIFIER || work->type == STRING || work->type == RESERVED) {
             printf("~%s~ ", work->text);
         } else if (work->type == INTEGER) {
             printf("~%d~ ", work->integer);

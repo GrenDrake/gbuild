@@ -20,6 +20,7 @@ void next(lexerstate_t *state);
 lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
 int prev(const lexerstate_t *state);
 
+
 /*
 Convert the contents of a file into a series of tokens and add them to the global token list.
 */
@@ -108,6 +109,9 @@ tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
             token_text[ident_size] = 0;
 
             lexertoken_t *ident_token = new_token(IDENTIFIER, filename, token_line, token_column);
+            if (is_reserved_word(token_text)) {
+                ident_token->type = RESERVED;
+            }
             ident_token->text = token_text;
             add_token(tokens, ident_token);
         } else if (here(&state) == '"') {

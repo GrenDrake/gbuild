@@ -5,9 +5,12 @@
 
 enum tokentype_t {
     IDENTIFIER,
+    RESERVED,
     INTEGER,
     FLOAT,
-    STRING
+    STRING,
+    CHAR,
+    DICT_WORD
 };
 
 typedef struct PROJECT {
@@ -46,5 +49,6 @@ tokenlist_t* merge_tokens(tokenlist_t *first, tokenlist_t *second);
 void free_tokens(tokenlist_t *tokens);
 
 char *strdup (const char *source_string);
+int is_reserved_word(const char *word);
 
 #endif
