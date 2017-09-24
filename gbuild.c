@@ -2,17 +2,6 @@
 
 #include "gbuild.h"
 
-/*
-Duplicate and return a character string.
-*/
-char *strdup (const char *source_string) {
-    char *new_string = malloc(strlen(source_string) + 1);
-    if (new_string == 0) {
-        return 0;
-    }
-    strcpy(new_string, source_string);
-    return new_string;
-}
 
 
 int main(int argc, char *argv[]) {
@@ -20,7 +9,7 @@ int main(int argc, char *argv[]) {
     const char *project_file = "test.gproj";
     project_t *project = open_project(project_file);
     if (!project) {
-        fprintf(stderr, "FATAL: could not open project file \"%s\".\n", 
+        fprintf(stderr, "FATAL: could not open project file \"%s\".\n",
                 project_file);
         return 1;
     }

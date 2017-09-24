@@ -102,7 +102,7 @@ mnemonic_t mnemonics[] = {
     { "gestalt",       0x100,  3,        0 },
     { "debugtrap",     0x101,  1,        0 },
     { "getmemsize",    0x102,  1,        0 },
-    { "setmemsize",    0x103,  2,        MNE_RESIZE }, 
+    { "setmemsize",    0x103,  2,        MNE_RESIZE },
     { "random",        0x110,  2,        0 },
     { "setrandom",     0x111,  1,        0 },
     { "quit",          0x120,  0,        0 },
@@ -131,6 +131,17 @@ mnemonic_t mnemonics[] = {
 };
 
 
+/*
+Duplicate and return a character string.
+*/
+char *strdup (const char *source_string) {
+    char *new_string = malloc(strlen(source_string) + 1);
+    if (new_string == 0) {
+        return 0;
+    }
+    strcpy(new_string, source_string);
+    return new_string;
+}
 
 /*
 returns true if the value passed is a reserved word.
@@ -146,6 +157,9 @@ int is_reserved_word(const char *word) {
     return 0;
 }
 
+/*
+Get information about an assembly mnemonic. Returns null if the mnemonic isn't valid.
+*/
 mnemonic_t* get_mnemonic(const char *name) {
     size_t i = 0;
     while (mnemonics[i].mnemonic) {
