@@ -3,6 +3,54 @@
 
 #include "gbuild.h"
 
+void dump_statement(int depth, statement_t *stmt);
+void dump_asmblock(int depth, asmblock_t *asmb);
+void dump_codeblock(int depth, codeblock_t *code);
+void dump_function(function_t *function);
+
+
+void dump_statement(int depth, statement_t *stmt) {
+    switch(stmt->type) {
+        case STMT_ASM:
+            dump_asmblock(depth, stmt->asm);
+            break;
+        case STMT_BLOCK:
+            dump_codeblock(depth, stmt->code);
+            break;
+        default:
+            for (int i = 0; i < depth; ++i) puts("    ");
+            printf("unknown statement type %d", stmt->type);
+    }
+}
+void dump_asmblock(int depth, asmblock_t *asmb) {
+    for (int i = 0; i < depth; ++i) printf("    ");
+    printf("ASM BLOCK\n");
+    ++depth;
+    for (int i = 0; i < depth; ++i) printf("    ");
+    printf("...\n");
+}
+void dump_codeblock(int depth, codeblock_t *code) {
+    for (int i = 0; i < depth; ++i) printf("    ");
+    printf("CODE BLOCK\n");
+
+    if (code->content == 0) {
+        ++depth;
+        for (int i = 0; i < depth; ++i) printf("    ");
+        printf("(no content)\n");
+        return;
+    }
+
+    statement_t *stmt = code->content;
+    while (stmt) {
+        dump_statement(depth+1, stmt);
+        stmt = stmt->next;
+    }
+
+}
+void dump_function(function_t *function) {
+    printf("FUNCTION %s\n", function->name);
+    dump_codeblock(1, function->code);
+}
 
 
 int main(int argc, char *argv[]) {
