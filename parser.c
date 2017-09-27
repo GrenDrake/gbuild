@@ -60,7 +60,17 @@ void advance(lexertoken_t **token) {
 
 void add_to_block(codeblock_t *code, statement_t *what) {
     if (code == 0 || what == 0) return;
-    
+
+    if (code->content == 0) {
+        code->content = what;
+        return;
+    }
+
+    statement_t *work = code->content;
+    while (work->next) {
+        work = work->next;
+    }
+    work->next = what;
 }
 
 int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens) {
@@ -71,8 +81,11 @@ int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens) {
         if (match_text(current, RESERVED, "function")) {
             function_t *new_func = parse_function(&current);
             if (new_func) {
-                free(new_func->code);
-                free(new_func);
+                new_func->next = gamedata->functions;
+                if (gamedata->functions) {
+                    gamedata->functions->prev = new_func;
+                }
+                gamedata->functions = new_func;
             } else {
                 has_errors = 1;
             }
@@ -100,11 +113,11 @@ function_t* parse_function(lexertoken_t **current) {
         return 0;
     }
     function_t *new_func = calloc(sizeof(function_t), 1);
-    new_func->name = (*current)->text;
+    new_func->name = strdup((*current)->text);
     advance(current);
 
     if (!match(*current, OPEN_PARAN)) {
-        free(new_func);
+        free_function(new_func);
         show_error(*current, "%s:%d:%d  ERROR: Expected '('");
         return 0;
     }
@@ -113,7 +126,7 @@ function_t* parse_function(lexertoken_t **current) {
     /* parse arguments */
 
     if (!match(*current, CLOSE_PARAN)) {
-        free(new_func);
+        free_function(new_func);
         show_error(*current, "%s:%d:%d  ERROR: Expected ')'");
         return 0;
     }
@@ -124,7 +137,7 @@ function_t* parse_function(lexertoken_t **current) {
     if (new_func->code) {
         return new_func;
     } else {
-        free(new_func);
+        free_function(new_func);
         return 0;
     }
 }
@@ -148,13 +161,19 @@ codeblock_t* parse_codeblock(lexertoken_t **current) {
 
         if (match(*current, OPEN_BRACE)) {
             codeblock_t *inner = parse_codeblock(current);
-            free(inner);
+            if (inner) {
+                statement_t *stmt = calloc(sizeof(statement_t), 1);
+                stmt->type = STMT_BLOCK;
+                stmt->code = inner;
+                add_to_block(code, stmt);
+            }
         } else if (match_text(*current, RESERVED, "asm")) {
             asmblock_t *inner = parse_asmblock(current);
             if (inner) {
                 statement_t *stmt = calloc(sizeof(statement_t), 1);
                 stmt->type = STMT_ASM;
                 stmt->asm = inner;
+                add_to_block(code, stmt);
             }
         } else {
             advance(current);

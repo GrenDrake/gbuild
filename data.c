@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -170,4 +171,40 @@ mnemonic_t* get_mnemonic(const char *name) {
         ++i;
     }
     return 0;
+}
+
+void free_gamefile(glulxfile_t *what) {
+    function_t *func = what->functions;
+    while (func) {
+        function_t *next = func->next;
+        free_function(func);
+        func = next;
+    }
+    free(what);
+}
+
+void free_function(function_t *what) {
+    free(what->name);
+    free_codeblock(what->code);
+    free(what);
+}
+
+void free_codeblock(codeblock_t *what) {
+    statement_t *here = what->content;
+    while (here) {
+        statement_t *next = here->next;
+        switch(here->type) {
+            case STMT_ASM:      free_asmblock(here->asm);   break;
+            case STMT_BLOCK:    free_codeblock(here->code); break;
+            default:
+                fprintf(stderr, "unhandled statement type %d in free_codeblock\n", here->type);
+        }
+        free(here);
+        here = next;
+    }
+    free(what);
+}
+
+void free_asmblock(asmblock_t *what) {
+    free(what);
 }

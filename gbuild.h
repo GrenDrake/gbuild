@@ -121,6 +121,7 @@ typedef struct FUNCTION_DEF {
     const char *name;
     codeblock_t *code;
 
+    struct FUNCTION_DEF *prev;
     struct FUNCTION_DEF *next;
 } function_t;
 
@@ -147,5 +148,10 @@ int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens);
 char *strdup (const char *source_string);
 int is_reserved_word(const char *word);
 mnemonic_t* get_mnemonic(const char *name);
+
+void free_gamefile(glulxfile_t *what);
+void free_function(function_t *what);
+void free_codeblock(codeblock_t *what);
+void free_asmblock(asmblock_t *what);
 
 #endif

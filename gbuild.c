@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "gbuild.h"
 
@@ -32,8 +33,8 @@ int main(int argc, char *argv[]) {
         ++i;
     }
 
-    glulxfile_t gamefile = {0};
-    parse_file(&gamefile, list);
+    glulxfile_t *gamefile = calloc(sizeof(glulxfile_t), 1);
+    parse_file(gamefile, list);
 
 
 
@@ -54,6 +55,15 @@ int main(int argc, char *argv[]) {
         work = work->next;
     }
 
+
+    function_t *func = gamefile->functions;
+    while (func) {
+        dump_function(func);
+        func = func->next;
+    }
+
+
+    free_gamefile(gamefile);
     free_tokens(list);
     free_project(project);
     return 0;
