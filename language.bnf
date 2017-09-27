@@ -1,0 +1,16 @@
+<IDENTIFIER>    -> [a-zA-Z0-9_]+
+<INTEGER>       -> [0-9]+ | 0x[0-9a-fA-F]+
+<FLOAT>         -> [0-9]+\.[0-9]*
+<CHAR>          -> '.'
+
+<file>          -> <top-def>*
+
+<top-def>       -> <function-def>
+
+<function-def>  -> "function" <IDENTIFIER> "("  ")" <code-block>
+<code-block>    -> "{" <statement>* "}"
+<statement>     -> <code-block>
+                 | <asm-block>
+<asm-block>     -> "asm" "{" <asm-stmt>* "}"
+<asm-stmt>      -> <IDENTIFIER> <asm-operand>* ";"
+<asm-operand>   -> <INTEGER> | <CHAR> | <IDENTIFIER> | "sp"
