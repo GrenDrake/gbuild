@@ -64,12 +64,12 @@ Stores information about a lexer token.
 */
 typedef struct LEXER_TOKEN {
     int type;
-    const char *filename;
+    char *filename;
     int line_no;
     int col_no;
 
     union {
-        const char *text;
+        char *text;
         int integer;
     };
 
@@ -89,7 +89,7 @@ typedef struct TOKEN_LIST {
 Stores an assembly statement
 */
 typedef struct ASM_STATEMENT {
-    const char *mnemonic;
+    char *mnemonic;
 
     struct ASM_STATEMENT *next;
 } asmstmt_t;
@@ -127,7 +127,7 @@ typedef struct STATEMENT_DEF {
 Store a function definition and associated code block.
 */
 typedef struct FUNCTION_DEF {
-    const char *name;
+    char *name;
     codeblock_t *code;
 
     struct FUNCTION_DEF *prev;
