@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     parse_file(gamefile, list);
 
 
-
+/*
     if (!list->first) {
         printf("no tokens found\n");
         return 1;
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
         printf(" @  %s:%d:%d\n", work->filename, work->line_no, work->col_no);
         work = work->next;
     }
-
+*/
 
     function_t *func = gamefile->functions;
     while (func) {
