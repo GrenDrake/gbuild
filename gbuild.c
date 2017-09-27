@@ -32,6 +32,10 @@ int main(int argc, char *argv[]) {
         ++i;
     }
 
+    glulxfile_t gamefile = {0};
+    parse_file(&gamefile, list);
+
+
 
     if (!list->first) {
         printf("no tokens found\n");

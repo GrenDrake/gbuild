@@ -79,6 +79,33 @@ typedef struct TOKEN_LIST {
     lexertoken_t *last;
 } tokenlist_t;
 
+/*
+Stores a block of code
+*/
+typedef struct CODEBLOCK_DEF {
+    int a;
+} codeblock_t;
+
+/*
+Store a function definition and associated code block.
+*/
+typedef struct FUNCTION_DEF {
+    const char *name;
+    codeblock_t *code;
+
+    struct FUNCTION_DEF *next;
+} function_t;
+
+/*
+Keep track of all data and content that makes up the content of a glulx game file.
+*/
+typedef struct GLULXFILE {
+    void *constants;
+    function_t *functions;
+    void *globals;
+    void *objects;
+} glulxfile_t;
+
 project_t* open_project(const char *project_file);
 void free_project(project_t *project);
 
@@ -86,6 +113,8 @@ tokenlist_t* lex_file(const char *filename);
 tokenlist_t* lex_string(const char *filename, const char *text, size_t length);
 tokenlist_t* merge_tokens(tokenlist_t *first, tokenlist_t *second);
 void free_tokens(tokenlist_t *tokens);
+
+int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens);
 
 char *strdup (const char *source_string);
 int is_reserved_word(const char *word);
