@@ -4,6 +4,7 @@
 #include "gbuild.h"
 
 void dump_statement(int depth, statement_t *stmt);
+void dump_asmstmt(int depth, asmstmt_t *stmt);
 void dump_asmblock(int depth, asmblock_t *asmb);
 void dump_codeblock(int depth, codeblock_t *code);
 void dump_function(function_t *function);
@@ -22,12 +23,26 @@ void dump_statement(int depth, statement_t *stmt) {
             printf("unknown statement type %d", stmt->type);
     }
 }
+void dump_asmstmt(int depth, asmstmt_t *stmt) {
+    for (int i = 0; i < depth; ++i) printf("    ");
+    printf("ASM \"%s\"\n", stmt->mnemonic);
+}
 void dump_asmblock(int depth, asmblock_t *asmb) {
     for (int i = 0; i < depth; ++i) printf("    ");
     printf("ASM BLOCK\n");
-    ++depth;
-    for (int i = 0; i < depth; ++i) printf("    ");
-    printf("...\n");
+
+    if (asmb->content == 0) {
+        ++depth;
+        for (int i = 0; i < depth; ++i) printf("    ");
+        printf("(no content)\n");
+        return;
+    }
+
+    asmstmt_t *stmt = asmb->content;
+    while (stmt) {
+        dump_asmstmt(depth+1,stmt);
+        stmt = stmt->next;
+    }
 }
 void dump_codeblock(int depth, codeblock_t *code) {
     for (int i = 0; i < depth; ++i) printf("    ");

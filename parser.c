@@ -17,6 +17,7 @@ void add_to_block(codeblock_t *code, statement_t *what);
 function_t* parse_function(lexertoken_t **current);
 codeblock_t* parse_codeblock(lexertoken_t **current);
 asmblock_t* parse_asmblock(lexertoken_t **current);
+asmstmt_t* parse_asmstmt(lexertoken_t **current);
 
 
 int match(lexertoken_t *token, int type) {
@@ -67,6 +68,21 @@ void add_to_block(codeblock_t *code, statement_t *what) {
     }
 
     statement_t *work = code->content;
+    while (work->next) {
+        work = work->next;
+    }
+    work->next = what;
+}
+
+void add_to_asmblock(asmblock_t *asmb, asmstmt_t *what) {
+    if (asmb == 0 || what == 0) return;
+
+    if (asmb->content == 0) {
+        asmb->content = what;
+        return;
+    }
+
+    asmstmt_t *work = asmb->content;
     while (work->next) {
         work = work->next;
     }
@@ -200,11 +216,16 @@ asmblock_t* parse_asmblock(lexertoken_t **current) {
     advance(current);
 
     asmblock_t *code = calloc(sizeof(asmblock_t), 1);
-    while (!match(*current, CLOSE_BRACE)) {
+    while (1) {
         if (*current == 0) {
             free(code);
             fprintf(stderr, "FATAL: Unexpected end of file\n");
             return 0;
+        } else if (match(*current, CLOSE_BRACE)) {
+            break;
+        } else {
+            asmstmt_t *stmt = parse_asmstmt(current);
+            add_to_asmblock(code, stmt);
         }
 
         advance(current);
@@ -212,4 +233,33 @@ asmblock_t* parse_asmblock(lexertoken_t **current) {
     advance(current);
 
     return code;
+}
+
+asmstmt_t* parse_asmstmt(lexertoken_t **current) {
+    if (!match(*current, IDENTIFIER)) {
+        show_error(*current, "ERROR: Expected identifier");
+        return 0;
+    }
+    const char *mnemonic = (*current)->text;
+    if (get_mnemonic(mnemonic) == 0) {
+        show_error(*current, "ERROR: invalid assembly mnemonic");
+        return 0;
+    }
+
+    asmstmt_t *stmt = calloc(sizeof(asmstmt_t), 1);
+    stmt->mnemonic = strdup(mnemonic);
+
+    while (1) {
+        if (*current == 0) {
+            fprintf(stderr, "FATAL: Unexpected end of file\n");
+            free_asmstmt(stmt);
+            return 0;
+        } else if (match(*current, SEMICOLON)) {
+            break;
+        } else {
+            advance(current);
+        }
+    }
+
+    return stmt;
 }

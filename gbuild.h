@@ -86,10 +86,19 @@ typedef struct TOKEN_LIST {
 } tokenlist_t;
 
 /*
+Stores an assembly statement
+*/
+typedef struct ASM_STATEMENT {
+    const char *mnemonic;
+
+    struct ASM_STATEMENT *next;
+} asmstmt_t;
+
+/*
 Store a block of assembly opcodes
 */
 typedef struct ASMBLOCK_DEF {
-    int a;
+    asmstmt_t *content;
 } asmblock_t;
 
 /*
@@ -153,5 +162,6 @@ void free_gamefile(glulxfile_t *what);
 void free_function(function_t *what);
 void free_codeblock(codeblock_t *what);
 void free_asmblock(asmblock_t *what);
+void free_asmstmt(asmstmt_t *what);
 
 #endif

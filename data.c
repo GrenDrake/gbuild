@@ -208,3 +208,8 @@ void free_codeblock(codeblock_t *what) {
 void free_asmblock(asmblock_t *what) {
     free(what);
 }
+
+void free_asmstmt(asmstmt_t *what) {
+    free(what->mnemonic);
+    free(what);
+}
