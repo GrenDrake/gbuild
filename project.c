@@ -16,8 +16,8 @@ project_t* open_project(const char *project_file) {
 
     project_t *project = calloc(sizeof(project_t), 1);
     project->project_file = strdup(project_file);
-    
-    size_t line = 0;
+
+    unsigned int line = 0;
     while (1) {
         char input_buffer[MAX_INPUT_SIZE] = {0};
         fgets(input_buffer, MAX_INPUT_SIZE - 1, fp);
@@ -26,7 +26,7 @@ project_t* open_project(const char *project_file) {
         }
         ++line;
         char *command = strtok(input_buffer, DELIMITERS);
-        
+
         if (command == 0) {
             // empty string
             continue;
@@ -53,7 +53,7 @@ project_t* open_project(const char *project_file) {
                     command, line);
         }
     }
-    
+
     fclose(fp);
     return project;
 }
