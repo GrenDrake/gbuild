@@ -33,6 +33,12 @@ enum tokentype_t {
     SEMICOLON
 };
 
+enum statement_type_t {
+    STMT_UNKNOWN,
+    STMT_BLOCK,
+    STMT_ASM
+};
+
 /*
 Stores information about a single assembly mnemonic.
 */
@@ -80,11 +86,33 @@ typedef struct TOKEN_LIST {
 } tokenlist_t;
 
 /*
+Store a block of assembly opcodes
+*/
+typedef struct ASMBLOCK_DEF {
+    int a;
+} asmblock_t;
+
+/*
 Stores a block of code
 */
+struct STATEMENT_DEF;
 typedef struct CODEBLOCK_DEF {
-    int a;
+    struct STATEMENT_DEF *content;
 } codeblock_t;
+
+/*
+Store an individual 'statement'
+*/
+typedef struct STATEMENT_DEF {
+    int type;
+    union {
+        codeblock_t *code;
+        asmblock_t *asm;
+    };
+
+    struct STATEMENT_DEF *prev;
+    struct STATEMENT_DEF *next;
+} statement_t;
 
 /*
 Store a function definition and associated code block.

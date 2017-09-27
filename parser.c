@@ -7,9 +7,16 @@
 
 int match(lexertoken_t *token, int type);
 int match_text(lexertoken_t *token, int type, const char *text);
+int match_int(lexertoken_t *token, int type, int value);
 
-function_t* parse_function(lexertoken_t *current);
-codeblock_t* parse_codeblock(lexertoken_t *current);
+void show_error(lexertoken_t *where, const char *message);
+void advance(lexertoken_t **token);
+
+void add_to_block(codeblock_t *code, statement_t *what);
+
+function_t* parse_function(lexertoken_t **current);
+codeblock_t* parse_codeblock(lexertoken_t **current);
+asmblock_t* parse_asmblock(lexertoken_t **current);
 
 
 int match(lexertoken_t *token, int type) {
@@ -39,7 +46,22 @@ int match_int(lexertoken_t *token, int type, int value) {
     return 1;
 }
 
+void show_error(lexertoken_t *where, const char *message) {
+    fprintf(stderr, "%s:%d:%d   %s\n",
+            where->filename, where->line_no, where->col_no,
+            message);
+}
 
+void advance(lexertoken_t **token) {
+    if (*token != 0) {
+        *token = (*token)->next;
+    }
+}
+
+void add_to_block(codeblock_t *code, statement_t *what) {
+    if (code == 0 || what == 0) return;
+    
+}
 
 int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens) {
     int has_errors = 0;
@@ -47,16 +69,16 @@ int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens) {
     lexertoken_t *current = tokens->first;
     while (current) {
         if (match_text(current, RESERVED, "function")) {
-            function_t *new_func = parse_function(current);
+            function_t *new_func = parse_function(&current);
             if (new_func) {
+                free(new_func->code);
                 free(new_func);
             } else {
                 has_errors = 1;
             }
         } else {
-            fprintf(stderr, "%s:%d:%d  Unexpected token type: %d\n",
-                    current->filename, current->line_no, current->col_no, current->type);
-            current = current->next;
+            show_error(current, "Unexpected token type");
+            advance(&current);
             has_errors = 1;
         }
     }
@@ -65,40 +87,37 @@ int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens) {
 }
 
 
-function_t* parse_function(lexertoken_t *current) {
-    if (!match_text(current, RESERVED, "function")) {
-        fprintf(stderr, "%s:%d:%d  ERROR: Expected keyword \"function\"\n",
-                current->filename, current->line_no, current->col_no);
+function_t* parse_function(lexertoken_t **current) {
+    show_error(*current, "PARSING FUNCTION");
+    if (!match_text(*current, RESERVED, "function")) {
+        show_error(*current, "ERROR: Expected keyword \"function\"");
         return 0;
     }
-    current = current->next;
+    advance(current);
 
-    if (current->type != IDENTIFIER) {
-        fprintf(stderr, "%s:%d:%d  ERROR: Expected identifier\n",
-                current->filename, current->line_no, current->col_no);
+    if ((*current)->type != IDENTIFIER) {
+        show_error(*current, "ERROR: Expected identifier");
         return 0;
     }
     function_t *new_func = calloc(sizeof(function_t), 1);
-    new_func->name = current->text;
-    current = current->next;
+    new_func->name = (*current)->text;
+    advance(current);
 
-    if (!match(current, OPEN_PARAN)) {
+    if (!match(*current, OPEN_PARAN)) {
         free(new_func);
-        fprintf(stderr, "%s:%d:%d  ERROR: Expected (\n",
-                current->filename, current->line_no, current->col_no);
+        show_error(*current, "%s:%d:%d  ERROR: Expected '('");
         return 0;
     }
-    current = current->next;
+    advance(current);
 
     /* parse arguments */
 
-    if (!match(current, CLOSE_PARAN)) {
+    if (!match(*current, CLOSE_PARAN)) {
         free(new_func);
-        fprintf(stderr, "%s:%d:%d  ERROR: Expected )\n",
-                current->filename, current->line_no, current->col_no);
+        show_error(*current, "%s:%d:%d  ERROR: Expected ')'");
         return 0;
     }
-    current = current->next;
+    advance(current);
 
     new_func->code = parse_codeblock(current);
 
@@ -110,34 +129,68 @@ function_t* parse_function(lexertoken_t *current) {
     }
 }
 
-codeblock_t* parse_codeblock(lexertoken_t *current) {
+codeblock_t* parse_codeblock(lexertoken_t **current) {
+    show_error(*current, "PARSING CODE BLOCK");
 
-    if (!match(current, OPEN_BRACE)) {
-        fprintf(stderr, "%s:%d:%d  ERROR: Expected {\n",
-                current->filename, current->line_no, current->col_no);
+    if (!match(*current, OPEN_BRACE)) {
+        show_error(*current, "ERROR: Expected '{'");
         return 0;
     }
-    current = current->next;
+    advance(current);
 
     codeblock_t *code = calloc(sizeof(codeblock_t), 1);
-    while (!match(current, CLOSE_BRACE)) {
-        if (current == 0) {
+    while (!match(*current, CLOSE_BRACE)) {
+        if (*current == 0) {
             free(code);
             fprintf(stderr, "FATAL: Unexpected end of file\n");
             return 0;
         }
 
-        current = current->next;
+        if (match(*current, OPEN_BRACE)) {
+            codeblock_t *inner = parse_codeblock(current);
+            free(inner);
+        } else if (match_text(*current, RESERVED, "asm")) {
+            asmblock_t *inner = parse_asmblock(current);
+            if (inner) {
+                statement_t *stmt = calloc(sizeof(statement_t), 1);
+                stmt->type = STMT_ASM;
+                stmt->asm = inner;
+            }
+        } else {
+            advance(current);
+        }
     }
-    /* parse statements */
+    advance(current);
 
-    if (!match(current, CLOSE_BRACE)) {
-        free(code);
-        fprintf(stderr, "%s:%d:%d  ERROR: Expected }\n",
-                current->filename, current->line_no, current->col_no);
+    return code;
+}
+
+asmblock_t* parse_asmblock(lexertoken_t **current) {
+    show_error(*current, "PARSING ASM BLOCK");
+
+    if (!match_text(*current, RESERVED, "asm")) {
+        show_error(*current, "ERROR: Expected 'asm'");
         return 0;
     }
-    current = current->next;
+    advance(current);
+
+    if (!match(*current, OPEN_BRACE)) {
+        show_error(*current, "ERROR: Expected '{'");
+        return 0;
+    }
+    advance(current);
+
+    asmblock_t *code = calloc(sizeof(asmblock_t), 1);
+    while (!match(*current, CLOSE_BRACE)) {
+        if (*current == 0) {
+            free(code);
+            fprintf(stderr, "FATAL: Unexpected end of file\n");
+            return 0;
+        }
+
+        advance(current);
+    }
+    advance(current);
 
     return code;
 }
