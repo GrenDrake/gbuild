@@ -78,26 +78,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    tokenlist_t *list = 0;
-    int i = 0;
-    while(project->files[i]) {
-        tokenlist_t *newlist = lex_file(project->files[i]);
-        if (!newlist) {
-            fprintf(stderr, "FATAL: errors occured while lexing file \"%s\".\n",
-                    project->files[i]);
-            free_tokens(list);
-            return 2;
-        }
-        if (list) {
-            list = merge_tokens(list, newlist);
-        } else {
-            list = newlist;
-        }
-        ++i;
-    }
-
     glulxfile_t *gamefile = calloc(sizeof(glulxfile_t), 1);
-    parse_file(gamefile, list);
+    for (int i = 0; project->files[i]; ++i) {
+        tokenlist_t *list = lex_file(project->files[i]);
+        if (list) {
+            parse_file(gamefile, list);
+            free_tokens(list);
+        }
+    }
 
 
 /*
@@ -127,7 +115,6 @@ int main(int argc, char *argv[]) {
 
 
     free_gamefile(gamefile);
-    free_tokens(list);
     free_project(project);
     return 0;
 }
