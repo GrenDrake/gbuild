@@ -210,6 +210,20 @@ void free_asmblock(asmblock_t *what) {
 }
 
 void free_asmstmt(asmstmt_t *what) {
+    switch(what->type) {
+        case ASM_LABEL:         free_asmlabel(what->label); break;
+        case ASM_INSTRUCTION:   free_asminst(what->inst); break;
+        default:
+            fprintf(stderr, "unhandled statement type %d in free_asmstmt\n", what->type);
+    }
+    free(what);
+}
+void free_asmlabel(asmlabel_t *what) {
+    free(what->name);
+    free(what);
+}
+
+void free_asminst(asminst_t *what) {
     free(what->mnemonic);
     free(what);
 }

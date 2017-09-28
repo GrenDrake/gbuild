@@ -103,6 +103,9 @@ tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
         } else if (here(&state) == ';') {
             add_token(tokens, new_token(SEMICOLON, filename, state.line, state.column));
             next(&state);
+        } else if (here(&state) == ':') {
+            add_token(tokens, new_token(COLON, filename, state.line, state.column));
+            next(&state);
         } else if (here(&state) == '(') {
             add_token(tokens, new_token(OPEN_PARAN, filename, state.line, state.column));
             next(&state);

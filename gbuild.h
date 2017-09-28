@@ -30,13 +30,20 @@ enum tokentype_t {
     OPEN_BRACE,
     CLOSE_BRACE,
     COMMA,
-    SEMICOLON
+    SEMICOLON,
+    COLON
 };
 
 enum statement_type_t {
     STMT_UNKNOWN,
     STMT_BLOCK,
     STMT_ASM
+};
+
+enum asm_statement_type_t {
+    ASM_UNKNOWN,
+    ASM_INSTRUCTION,
+    ASM_LABEL
 };
 
 /*
@@ -88,8 +95,26 @@ typedef struct TOKEN_LIST {
 /*
 Stores an assembly statement
 */
-typedef struct ASM_STATEMENT {
+typedef struct ASM_INSTRUCTION {
     char *mnemonic;
+} asminst_t;
+
+/*
+Stores a assembly label
+*/
+typedef struct ASM_LABEL {
+    char *name;
+} asmlabel_t;
+
+/*
+Store an assembly statement and a pointrr to the next statement in this block
+*/
+typedef struct ASM_STATEMENT {
+    int type;
+    union {
+        asminst_t *inst;
+        asmlabel_t *label;
+    };
 
     struct ASM_STATEMENT *next;
 } asmstmt_t;
@@ -163,5 +188,7 @@ void free_function(function_t *what);
 void free_codeblock(codeblock_t *what);
 void free_asmblock(asmblock_t *what);
 void free_asmstmt(asmstmt_t *what);
+void free_asmlabel(asmlabel_t *what);
+void free_asminst(asminst_t *what);
 
 #endif

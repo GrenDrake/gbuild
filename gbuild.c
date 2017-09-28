@@ -25,7 +25,16 @@ void dump_statement(int depth, statement_t *stmt) {
 }
 void dump_asmstmt(int depth, asmstmt_t *stmt) {
     for (int i = 0; i < depth; ++i) printf("    ");
-    printf("ASM \"%s\"\n", stmt->mnemonic);
+    switch(stmt->type) {
+        case ASM_INSTRUCTION:
+            printf("ASM \"%s\"\n", stmt->inst->mnemonic);
+            break;
+        case ASM_LABEL:
+            printf("LBL \"%s\"\n", stmt->label->name);
+            break;
+        default:
+            printf("unknown statement type %d", stmt->type);
+    }
 }
 void dump_asmblock(int depth, asmblock_t *asmb) {
     for (int i = 0; i < depth; ++i) printf("    ");
