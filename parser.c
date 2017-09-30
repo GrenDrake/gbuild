@@ -268,7 +268,14 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
                 advance(current);
                 break;
             } else {
-                advance(current);
+                if (inst->operand_count < MAX_OPERANDS && match(*current, INTEGER)) {
+                    inst->operands[inst->operand_count].type = OP_INTEGER;
+                    inst->operands[inst->operand_count].value = (*current)->integer;
+                    ++inst->operand_count;
+                    advance(current);
+                } else {
+                    show_error(*current, "ERROR: bad asm operand");
+                }
             }
         }
         
