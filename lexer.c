@@ -15,6 +15,7 @@ typedef struct LEXER_STATE {
 
 void add_token(tokenlist_t *tokens, lexertoken_t *token);
 int here(const lexerstate_t *state);
+int peek(const lexerstate_t *state);
 int is_identifier(char what, int first_char);
 void next(lexerstate_t *state);
 lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
@@ -61,6 +62,16 @@ Return the current character, or 0 if we're at the end of the string.
 int here(const lexerstate_t *state) {
     if (state->pos < state->length) {
         return state->text[state->pos];
+    } else {
+        return 0;
+    }
+}
+/*
+Return the next character, or 0 if it would be at or past the end of the string.
+*/
+int peek(const lexerstate_t *state) {
+    if (1 + state->pos < state->length) {
+        return state->text[1 + state->pos];
     } else {
         return 0;
     }
@@ -171,12 +182,29 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
         } else if (isdigit(here(&state))) {
             size_t token_line = state.line, token_column = state.column;
             int number = 0;
-            do {
-                int digit_value = here(&state) - '0';
-                number *= 10;
-                number += digit_value;
+
+            if (here(&state) == '0' && (peek(&state) == 'x' || peek(&state) == 'X')) {
                 next(&state);
-            } while(isdigit(here(&state)));
+                next(&state);
+                do {
+                    int digit_value = 0;
+                    if (isdigit(here(&state))) {
+                        digit_value = here(&state) - '0';
+                    } else {
+                        digit_value = tolower(here(&state)) - 'a' + 10;
+                    }
+                    number *= 16;
+                    number += digit_value;
+                    next(&state);
+                } while(isxdigit(here(&state)));
+            } else {
+                do {
+                    int digit_value = here(&state) - '0';
+                    number *= 10;
+                    number += digit_value;
+                    next(&state);
+                } while(isdigit(here(&state)));
+            }
 
             lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
             ident_token->integer = number;
