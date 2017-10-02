@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,8 +12,10 @@ typedef struct LEXER_STATE {
     size_t pos;
     size_t line;
     size_t column;
+    int has_errors;
 } lexerstate_t;
 
+void show_lexer_error(const char *filename, int line, int column, const char *error, ...);
 void add_token(tokenlist_t *tokens, lexertoken_t *token);
 int here(const lexerstate_t *state);
 int peek(const lexerstate_t *state);
@@ -20,6 +23,23 @@ int is_identifier(char what, int first_char);
 void next(lexerstate_t *state);
 lexertoken_t* new_token(int type, const char *filename, int lineNo, int colNo);
 int prev(const lexerstate_t *state);
+
+
+#define ERROR_BUFFER_SIZE 256
+void show_lexer_error(const char *filename, int line, int column, const char *error, ...) {
+    char error_buffer[ERROR_BUFFER_SIZE];
+
+    va_list args;
+    va_start(args, error);
+    int result = vsnprintf(error_buffer, ERROR_BUFFER_SIZE, error, args);
+    va_end(args);
+
+    fprintf(stderr, "%s:%d:%d: lexer-error: %s\n", filename, line, column, error_buffer);
+    if (result >= ERROR_BUFFER_SIZE || result < 0) {
+        fprintf(stderr, "ERROR: problem occured while displaying error message.\n");
+    }
+}
+
 
 
 /*
@@ -81,12 +101,12 @@ Advance our position in the string by one and update the line and column numbers
 */
 void next(lexerstate_t *state) {
     if (state->pos < state->length) {
-        ++state->pos;
-        ++state->column;
         if (here(state) == '\n') {
-            state->column = 1;
+            state->column = 0;
             ++state->line;
         }
+        ++state->pos;
+        ++state->column;
     }
 }
 
@@ -100,6 +120,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
     state.line = 1;
     state.column = 1;
     state.pos = 0;
+    state.has_errors = 0;
 
     tokenlist_t *tokens = calloc(sizeof(tokenlist_t), 1);
 
@@ -151,6 +172,12 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             next(&state);
             size_t start = state.pos;
             while(here(&state) != '"' || prev(&state) == '\\') {
+                if (here(&state) == 0) {
+                    state.has_errors = 1;
+                    show_lexer_error(filename, token_line, token_column,
+                        "unterminated string");
+                    break;
+                }
                 next(&state);
             }
             int string_size = state.pos - start;
@@ -167,6 +194,12 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             next(&state);
             size_t start = state.pos;
             while(here(&state) != '`') {
+                if (here(&state) == 0) {
+                    state.has_errors = 1;
+                    show_lexer_error(filename, token_line, token_column,
+                        "unterminated dictionary word");
+                    break;
+                }
                 next(&state);
             }
             int string_size = state.pos - start;
@@ -184,12 +217,20 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             next(&state);
             size_t start = state.pos;
             while(here(&state) != '\'') {
+                if (here(&state) == 0) {
+                    state.has_errors = 1;
+                    show_lexer_error(filename, token_line, token_column,
+                        "unterminated character constant");
+                    break;
+                }
                 next(&state);
             }
             int string_size = state.pos - start;
             int char_value = 0;
             if (string_size > 1) {
-                fprintf(stderr, "LEXER: oversized character constant (must be one character)\n");
+                state.has_errors = 1;
+                show_lexer_error(filename, token_line, token_column,
+                    "oversized character constant (>1 character)");
             } else {
                 char_value = state.text[start];
             }
@@ -228,10 +269,17 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             ident_token->integer = number;
             add_token(tokens, ident_token);
         } else {
-            fprintf(stderr, "LEXER: unexpected '%c' (%d)\n",
-                    here(&state), here(&state));
+            state.has_errors = 1;
+            show_lexer_error(filename, state.line, state.column,
+                                "unexpected character '%c' (%d)",
+                                here(&state), here(&state));
             next(&state);
         }
+    }
+
+    if (state.has_errors) {
+        free_tokens(tokens);
+        return 0;
     }
     return tokens;
 }
