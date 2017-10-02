@@ -173,7 +173,60 @@ mnemonic_t* get_mnemonic(const char *name) {
     return 0;
 }
 
+
+void add_dictionary_word(symboltable_t *table, const char *word) {
+    if (table == 0 || word == 0) return;
+    dictword_t *new_word = calloc(sizeof(dictword_t), 1);
+    new_word->word = strdup(word);
+    if (table->dictionary == 0) {
+        table->dictionary = new_word;
+    } else if (strcmp(word, table->dictionary->word) < 0) {
+        new_word->next = table->dictionary;
+        table->dictionary = new_word;
+    } else {
+        dictword_t *current = table->dictionary;
+        while (current->next) {
+            if (strcmp(word, current->next->word) < 0) {
+                new_word->next = current->next;
+                current->next = new_word;
+                return;
+            }
+            current = current->next;
+        }
+        current->next = new_word;
+    }
+}
+void index_dictionary(symboltable_t *symbols) {
+    unsigned next_index = 0;
+    dictword_t *word = symbols->dictionary;
+    while (word) {
+        word->index = next_index;
+        ++next_index;
+        word = word->next;
+    }
+}
+
+void free_symbol_table(symboltable_t *table) {
+    for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
+        symbol_t *current = table->symbol_buckets[i];
+        while (current) {
+            symbol_t *next = current->next;
+            free(current);
+            current = next;
+        }
+    }
+    dictword_t *current = table->dictionary;
+    while (current) {
+        dictword_t *next = current->next;
+        free(current->word);
+        free(current);
+        current = next;
+    }
+    free(table);
+}
+
 void free_gamefile(glulxfile_t *what) {
+    free_symbol_table(what->global_symbols);
     function_t *func = what->functions;
     while (func) {
         function_t *next = func->next;

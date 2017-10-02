@@ -24,7 +24,7 @@ int prev(const lexerstate_t *state);
 /*
 Convert the contents of a file into a series of tokens and add them to the global token list.
 */
-tokenlist_t* lex_file(const char *filename) {
+tokenlist_t* lex_file(glulxfile_t *gamefile, const char *filename) {
     FILE *fp = fopen(filename, "rt");
     if (!fp) {
         fprintf(stderr, "Could not open file \"%s\"\n", filename);
@@ -39,7 +39,7 @@ tokenlist_t* lex_file(const char *filename) {
     fread(filedata, readsize, 1, fp);
     filedata[readsize] = 0;
 
-    tokenlist_t *result = lex_string(filename, filedata, readsize);
+    tokenlist_t *result = lex_string(gamefile, filename, filedata, readsize);
     free(filedata);
     return result;
 }
@@ -82,14 +82,14 @@ void next(lexerstate_t *state) {
 /*
 Convert a string into a sequence of tokens and add them to the global token list.
 */
-tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
+tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char *text, size_t length) {
     lexerstate_t state;
     state.text = text;
     state.length = length;
     state.line = 1;
     state.column = 1;
     state.pos = 0;
-    
+
     tokenlist_t *tokens = calloc(sizeof(tokenlist_t), 1);
 
     while (state.pos < state.length) {
@@ -151,6 +151,23 @@ tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
             lexertoken_t *string_token = new_token(STRING, filename, token_line, token_column);
             string_token->text = string_text;
             add_token(tokens, string_token);
+        } else if (here(&state) == '`') {
+            size_t token_line = state.line, token_column = state.column;
+            next(&state);
+            size_t start = state.pos;
+            while(here(&state) != '`') {
+                next(&state);
+            }
+            int string_size = state.pos - start;
+            next(&state);
+            char *string_text = malloc(string_size + 1);
+            strncpy(string_text, &state.text[start], string_size);
+            string_text[string_size] = 0;
+
+            add_dictionary_word(gamefile->global_symbols, string_text);
+            lexertoken_t *string_token = new_token(DICT_WORD, filename, token_line, token_column);
+            string_token->text = string_text;
+            add_token(tokens, string_token);
         } else if (isdigit(here(&state))) {
             size_t token_line = state.line, token_column = state.column;
             int number = 0;
@@ -165,7 +182,7 @@ tokenlist_t* lex_string(const char *filename, const char *text, size_t length) {
             ident_token->integer = number;
             add_token(tokens, ident_token);
         } else {
-            fprintf(stderr, "LEXER: unexpected '%c' (%d)\n", 
+            fprintf(stderr, "LEXER: unexpected '%c' (%d)\n",
                     here(&state), here(&state));
             next(&state);
         }
@@ -228,7 +245,7 @@ if required.
 tokenlist_t* merge_tokens(tokenlist_t *first, tokenlist_t *second) {
     if (first == 0) return second;
     if (second == 0) return first;
-    
+
     if (first->first == 0) {
         free(first);
         return second;
@@ -237,7 +254,7 @@ tokenlist_t* merge_tokens(tokenlist_t *first, tokenlist_t *second) {
         free(second);
         return first;
     }
-    
+
     first->last->next = second->first;
     second->first->prev = first->last;
     first->last = second->last;

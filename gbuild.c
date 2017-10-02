@@ -76,6 +76,20 @@ void dump_function(function_t *function) {
     dump_codeblock(1, function->code);
 }
 
+void dump_dictionary(symboltable_t *symbols) {
+    printf("Dictionary:\n");
+
+    if (!symbols->dictionary) {
+        printf("    (empty)\n");
+        return;
+    }
+
+    dictword_t *word = symbols->dictionary;
+    while (word) {
+        printf("    %s (%u)\n", word->word, word->index);
+        word = word->next;
+    }
+}
 
 int main(int argc, char *argv[]) {
 
@@ -88,14 +102,15 @@ int main(int argc, char *argv[]) {
     }
 
     glulxfile_t *gamefile = calloc(sizeof(glulxfile_t), 1);
+    gamefile->global_symbols = calloc(sizeof(symboltable_t), 1);
     for (int i = 0; project->files[i]; ++i) {
-        tokenlist_t *list = lex_file(project->files[i]);
+        tokenlist_t *list = lex_file(gamefile, project->files[i]);
         if (list) {
             parse_file(gamefile, list);
             free_tokens(list);
         }
     }
-
+    index_dictionary(gamefile->global_symbols);
 
 /*
     if (!list->first) {
@@ -121,6 +136,7 @@ int main(int argc, char *argv[]) {
         dump_function(func);
         func = func->next;
     }
+    dump_dictionary(gamefile->global_symbols);
 
 
     free_gamefile(gamefile);
