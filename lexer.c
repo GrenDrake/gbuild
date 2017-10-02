@@ -204,11 +204,11 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
     tokenlist_t *tokens = calloc(sizeof(tokenlist_t), 1);
 
     while (state.pos < state.length) {
+        if (isspace(here(&state))) {
         while (isspace(here(&state))) {
             next(&state);
         }
-
-        if (here(&state) == ',') {
+        } else if (here(&state) == ',') {
             add_token(tokens, new_token(COMMA, filename, state.line, state.column));
             next(&state);
         } else if (here(&state) == ';') {
