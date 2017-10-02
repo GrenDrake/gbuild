@@ -1,7 +1,6 @@
 <IDENTIFIER>    -> [a-zA-Z0-9_]+
-<INTEGER>       -> [0-9]+ | 0x[0-9a-fA-F]+
+<INTEGER>       -> [0-9]+ | 0x[0-9a-fA-F]+ | '.'
 <FLOAT>         -> [0-9]+\.[0-9]*
-<CHAR>          -> '.'
 
 <file>          -> <top-def>*
 
@@ -13,4 +12,4 @@
                  | <asm-block>
 <asm-block>     -> "asm" "{" <asm-stmt>* "}"
 <asm-stmt>      -> <IDENTIFIER> <asm-operand>* ";"
-<asm-operand>   -> <INTEGER> | <CHAR> | <IDENTIFIER> | "sp"
+<asm-operand>   -> <INTEGER> | <IDENTIFIER> | <STRING> | "[" <IDENTIFIER> "]" | "sp"
