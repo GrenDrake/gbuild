@@ -179,6 +179,24 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             lexertoken_t *string_token = new_token(DICT_WORD, filename, token_line, token_column);
             string_token->text = string_text;
             add_token(tokens, string_token);
+        } else if (here(&state) == '\'') {
+            size_t token_line = state.line, token_column = state.column;
+            next(&state);
+            size_t start = state.pos;
+            while(here(&state) != '\'') {
+                next(&state);
+            }
+            int string_size = state.pos - start;
+            int char_value = 0;
+            if (string_size > 1) {
+                fprintf(stderr, "LEXER: oversized character constant (must be one character)\n");
+            } else {
+                char_value = state.text[start];
+            }
+            next(&state);
+            lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
+            ident_token->integer = char_value;
+            add_token(tokens, ident_token);
         } else if (isdigit(here(&state))) {
             size_t token_line = state.line, token_column = state.column;
             int number = 0;
