@@ -16,6 +16,9 @@ typedef struct LEXER_STATE {
 } lexerstate_t;
 
 void show_lexer_error(const char *filename, int line, int column, const char *error, ...);
+int escape_hex_number(const char *filename, int line, int column, char *text, int length);
+void shift_string(char *text);
+int handle_string_escapes(const char *filename, int line, int column, char *text);
 void add_token(tokenlist_t *tokens, lexertoken_t *token);
 int here(const lexerstate_t *state);
 int peek(const lexerstate_t *state);
@@ -40,6 +43,82 @@ void show_lexer_error(const char *filename, int line, int column, const char *er
     }
 }
 
+
+int escape_hex_number(const char *filename, int line, int column, char *text, int length) {
+    int found_error = 0;
+    int number = 0;
+
+    for (int i = 0; i < length && text[i] != 0; ++i) {
+        if (!isxdigit(text[i])) {
+            found_error = 1;
+            show_lexer_error(filename, line, column,
+                                "string escape \\x00 contains invalid hex digit %c (%d)",
+                                text[i], text[i]);
+        }
+        number *= 16;
+        if (isdigit(text[i])) {
+            number += text[i] - '0';
+        } else {
+            number += tolower(text[i]) - 'a' + 10;
+        }
+    }
+
+    return found_error ? -1 : number;
+}
+void shift_string(char *text) {
+    char *cur = text;
+    while (*cur) {
+        *cur = *(cur + 1);
+        ++cur;
+    }
+}
+int handle_string_escapes(const char *filename, int line, int column, char *text) {
+    int errors_occured = 0;
+    int value;
+
+    char *pos = text;
+    while (*pos) {
+        if (*pos == '\\') {
+            char escape_char = *(pos+1);
+            switch(escape_char) {
+                case 0:
+                    errors_occured = 1;
+                    show_lexer_error(filename, line, column, "unexpected end of string");
+                    break;
+                    case 'x':
+                    shift_string(pos);
+                    shift_string(pos);
+                    value = escape_hex_number(filename, line, column, pos, 2);
+                    if (value < 0) {
+                        errors_occured = 1;
+                    } else {
+                        shift_string(pos);
+                        *pos = value;
+                    }
+                    break;
+                case 'n':
+                    shift_string(pos);
+                    *pos = '\n';
+                    break;
+                case 't':
+                    shift_string(pos);
+                    *pos = '\t';
+                    break;
+                case '"':
+                case '\'':
+                case '`':
+                    shift_string(pos);
+                    break;
+                default:
+                    errors_occured = 1;
+                    show_lexer_error(filename, line, column, "unknown string escape: \\%c", escape_char);
+            }
+        }
+        ++pos;
+    }
+
+    return !errors_occured;
+}
 
 
 /*
@@ -185,6 +264,9 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             char *string_text = malloc(string_size + 1);
             strncpy(string_text, &state.text[start], string_size);
             string_text[string_size] = 0;
+            if (!handle_string_escapes(filename, token_line, token_column, string_text)) {
+                state.has_errors = 1;
+            }
 
             lexertoken_t *string_token = new_token(STRING, filename, token_line, token_column);
             string_token->text = string_text;
@@ -193,7 +275,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             size_t token_line = state.line, token_column = state.column;
             next(&state);
             size_t start = state.pos;
-            while(here(&state) != '`') {
+            while(here(&state) != '`' || prev(&state) == '\\') {
                 if (here(&state) == 0) {
                     state.has_errors = 1;
                     show_lexer_error(filename, token_line, token_column,
@@ -207,6 +289,9 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             char *string_text = malloc(string_size + 1);
             strncpy(string_text, &state.text[start], string_size);
             string_text[string_size] = 0;
+            if (!handle_string_escapes(filename, token_line, token_column, string_text)) {
+                state.has_errors = 1;
+            }
 
             add_dictionary_word(gamefile->global_symbols, string_text);
             lexertoken_t *string_token = new_token(DICT_WORD, filename, token_line, token_column);
@@ -216,7 +301,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             size_t token_line = state.line, token_column = state.column;
             next(&state);
             size_t start = state.pos;
-            while(here(&state) != '\'') {
+            while(here(&state) != '\'' || prev(&state) == '\\') {
                 if (here(&state) == 0) {
                     state.has_errors = 1;
                     show_lexer_error(filename, token_line, token_column,
@@ -225,14 +310,21 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
                 }
                 next(&state);
             }
+            char char_constant[16] = {0};
             int string_size = state.pos - start;
+            strncpy(char_constant, &state.text[start], string_size);
+            if (!handle_string_escapes(filename, token_line, token_column, char_constant)) {
+                state.has_errors = 1;
+            }
+
             int char_value = 0;
-            if (string_size > 1) {
+            if (strlen(char_constant) > 1) {
                 state.has_errors = 1;
                 show_lexer_error(filename, token_line, token_column,
-                    "oversized character constant (>1 character)");
+                    "oversized character constant \"%s\" (longer than 1 character)",
+                    char_constant);
             } else {
-                char_value = state.text[start];
+                char_value = char_constant[0];
             }
             next(&state);
             lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
