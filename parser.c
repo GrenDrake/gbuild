@@ -240,12 +240,12 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
     }
     const char *mnemonic = (*current)->text;
     advance(current);
-    
+
     if (match(*current, COLON)) {
         advance(current);
         asmlabel_t *label = calloc(sizeof(asmlabel_t), 1);
         label->name = strdup(mnemonic);
-        
+
         asmstmt_t *stmt = calloc(sizeof(asmstmt_t), 1);
         stmt->label = label;
         stmt->type = ASM_LABEL;
@@ -255,10 +255,10 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
             show_error(*current, "ERROR: invalid assembly mnemonic");
             return 0;
         }
-    
+
         asminst_t *inst = calloc(sizeof(asminst_t), 1);
         inst->mnemonic = strdup(mnemonic);
-    
+
         while (1) {
             if (*current == 0) {
                 fprintf(stderr, "FATAL: Unexpected end of file\n");
@@ -275,10 +275,11 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
                     advance(current);
                 } else {
                     show_error(*current, "ERROR: bad asm operand");
+                    advance(current);
                 }
             }
         }
-        
+
         asmstmt_t *stmt = calloc(sizeof(asmstmt_t), 1);
         stmt->inst = inst;
         stmt->type = ASM_INSTRUCTION;
