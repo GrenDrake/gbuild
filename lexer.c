@@ -205,9 +205,9 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
 
     while (state.pos < state.length) {
         if (isspace(here(&state))) {
-        while (isspace(here(&state))) {
-            next(&state);
-        }
+            while (isspace(here(&state))) {
+                next(&state);
+            }
         } else if (here(&state) == ',') {
             add_token(tokens, new_token(COMMA, filename, state.line, state.column));
             next(&state);
@@ -228,6 +228,25 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             next(&state);
         } else if (here(&state) == '}') {
             add_token(tokens, new_token(CLOSE_BRACE, filename, state.line, state.column));
+            next(&state);
+        } else if (here(&state) == '/' && peek(&state) == '/') {
+            while (here(&state) != '\n' && here(&state) != 0) {
+                next(&state);
+            }
+        } else if (here(&state) == '/' && peek(&state) == '*') {
+            size_t token_line = state.line, token_column = state.column;
+            next(&state);
+            next(&state);
+            while ((here(&state) != '*' || peek(&state) != '/') && here(&state) != 0) {
+                next(&state);
+                if (here(&state) == 0) {
+                    state.has_errors = 1;
+                    show_lexer_error(filename, token_line, token_column,
+                        "unterminated block comment");
+                    break;
+                }
+            }
+            next(&state);
             next(&state);
         } else if (is_identifier(here(&state), 1)) {
             size_t token_line = state.line, token_column = state.column;
