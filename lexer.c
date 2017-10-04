@@ -263,7 +263,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             if (is_reserved_word(token_text)) {
                 ident_token->type = RESERVED;
             }
-            ident_token->text = token_text;
+            ident_token->data.text = token_text;
             add_token(tokens, ident_token);
         } else if (here(&state) == '"') {
             size_t token_line = state.line, token_column = state.column;
@@ -288,7 +288,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             }
 
             lexertoken_t *string_token = new_token(STRING, filename, token_line, token_column);
-            string_token->text = string_text;
+            string_token->data.text = string_text;
             add_token(tokens, string_token);
         } else if (here(&state) == '`') {
             size_t token_line = state.line, token_column = state.column;
@@ -314,7 +314,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
 
             add_dictionary_word(gamefile->global_symbols, string_text);
             lexertoken_t *string_token = new_token(DICT_WORD, filename, token_line, token_column);
-            string_token->text = string_text;
+            string_token->data.text = string_text;
             add_token(tokens, string_token);
         } else if (here(&state) == '\'') {
             size_t token_line = state.line, token_column = state.column;
@@ -347,7 +347,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             }
             next(&state);
             lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
-            ident_token->integer = char_value;
+            ident_token->data.integer = char_value;
             add_token(tokens, ident_token);
         } else if (isdigit(here(&state))) {
             size_t token_line = state.line, token_column = state.column;
@@ -377,7 +377,7 @@ tokenlist_t* lex_string(glulxfile_t *gamefile, const char *filename, const char 
             }
 
             lexertoken_t *ident_token = new_token(INTEGER, filename, token_line, token_column);
-            ident_token->integer = number;
+            ident_token->data.integer = number;
             add_token(tokens, ident_token);
         } else {
             state.has_errors = 1;
@@ -475,7 +475,7 @@ void free_tokens(tokenlist_t *tokens) {
     while (token) {
         lexertoken_t *next = token->next;
         if (token->type == IDENTIFIER || token->type == STRING) {
-            free((void*)token->text);
+            free((void*)token->data.text);
         }
         free((void*)token->filename);
         free(token);

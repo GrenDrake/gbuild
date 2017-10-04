@@ -120,7 +120,7 @@ typedef struct LEXER_TOKEN {
     union {
         char *text;
         int integer;
-    };
+    } data;
 
     struct LEXER_TOKEN *prev;
     struct LEXER_TOKEN *next;
@@ -140,7 +140,7 @@ typedef struct ASM_OPERAND {
     union {
         int value;
         char *name;
-    };
+    } data;
 } asmoperand_t;
 
 /*
@@ -168,7 +168,7 @@ typedef struct ASM_STATEMENT {
     union {
         asminst_t *inst;
         asmlabel_t *label;
-    };
+    } data;
 
     struct ASM_STATEMENT *next;
 } asmstmt_t;
@@ -196,7 +196,7 @@ typedef struct STATEMENT_DEF {
     union {
         codeblock_t *code;
         asmblock_t *asm;
-    };
+    } data;
 
     struct STATEMENT_DEF *prev;
     struct STATEMENT_DEF *next;

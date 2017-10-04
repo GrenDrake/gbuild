@@ -23,10 +23,10 @@ void dump_symbols(int depth, symboltable_t *table) {
 void dump_statement(int depth, statement_t *stmt) {
     switch(stmt->type) {
         case STMT_ASM:
-            dump_asmblock(depth, stmt->asm);
+            dump_asmblock(depth, stmt->data.asm);
             break;
         case STMT_BLOCK:
-            dump_codeblock(depth, stmt->code);
+            dump_codeblock(depth, stmt->data.code);
             break;
         default:
             for (int i = 0; i < depth; ++i) puts("    ");
@@ -37,24 +37,24 @@ void dump_asmstmt(int depth, asmstmt_t *stmt) {
     for (int i = 0; i < depth; ++i) printf("    ");
     switch(stmt->type) {
         case ASM_INSTRUCTION:
-            printf("ASM \"%s\"", stmt->inst->mnemonic);
-            for (int i = 0; i < stmt->inst->operand_count; ++i) {
+            printf("ASM \"%s\"", stmt->data.inst->mnemonic);
+            for (int i = 0; i < stmt->data.inst->operand_count; ++i) {
                 printf(" ");
-                if (stmt->inst->operands[i].is_indirect) {
+                if (stmt->data.inst->operands[i].is_indirect) {
                     printf("*");
                 }
-                switch(stmt->inst->operands[i].type) {
+                switch(stmt->data.inst->operands[i].type) {
                     case OP_INTEGER:
-                        printf("int(%d)", stmt->inst->operands[i].value);
+                        printf("int(%d)", stmt->data.inst->operands[i].data.value);
                         break;
                     default:
-                        printf("[unknown operand type %d]", stmt->inst->operands[i].type);
+                        printf("[unknown operand type %d]", stmt->data.inst->operands[i].type);
                 }
             }
             printf("\n");
             break;
         case ASM_LABEL:
-            printf("LBL \"%s\"\n", stmt->label->name);
+            printf("LBL \"%s\"\n", stmt->data.label->name);
             break;
         default:
             printf("unknown statement type %d", stmt->type);

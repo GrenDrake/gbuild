@@ -277,8 +277,8 @@ void free_codeblock(codeblock_t *what) {
     while (here) {
         statement_t *next = here->next;
         switch(here->type) {
-            case STMT_ASM:      free_asmblock(here->asm);   break;
-            case STMT_BLOCK:    free_codeblock(here->code); break;
+            case STMT_ASM:      free_asmblock(here->data.asm);   break;
+            case STMT_BLOCK:    free_codeblock(here->data.code); break;
             default:
                 fprintf(stderr, "unhandled statement type %d in free_codeblock\n", here->type);
         }
@@ -294,8 +294,8 @@ void free_asmblock(asmblock_t *what) {
 
 void free_asmstmt(asmstmt_t *what) {
     switch(what->type) {
-        case ASM_LABEL:         free_asmlabel(what->label); break;
-        case ASM_INSTRUCTION:   free_asminst(what->inst); break;
+        case ASM_LABEL:         free_asmlabel(what->data.label); break;
+        case ASM_INSTRUCTION:   free_asminst(what->data.inst); break;
         default:
             fprintf(stderr, "unhandled statement type %d in free_asmstmt\n", what->type);
     }

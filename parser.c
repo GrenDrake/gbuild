@@ -31,7 +31,7 @@ int match_text(lexertoken_t *token, int type, const char *text) {
     if (token == 0 || token->type != type) {
         return 0;
     }
-    if (strcmp(text, token->text) != 0) {
+    if (strcmp(text, token->data.text) != 0) {
         return 0;
     }
     return 1;
@@ -41,7 +41,7 @@ int match_int(lexertoken_t *token, int type, int value) {
     if (token == 0 || token->type != type) {
         return 0;
     }
-    if (value != token->integer) {
+    if (value != token->data.integer) {
         return 0;
     }
     return 1;
@@ -135,7 +135,7 @@ function_t* parse_function(lexertoken_t **current) {
         return 0;
     }
     function_t *new_func = calloc(sizeof(function_t), 1);
-    new_func->name = strdup((*current)->text);
+    new_func->name = strdup((*current)->data.text);
     advance(current);
 
     if (!match(*current, OPEN_PARAN)) {
@@ -186,7 +186,7 @@ codeblock_t* parse_codeblock(lexertoken_t **current) {
             if (inner) {
                 statement_t *stmt = calloc(sizeof(statement_t), 1);
                 stmt->type = STMT_BLOCK;
-                stmt->code = inner;
+                stmt->data.code = inner;
                 add_to_block(code, stmt);
             }
         } else if (match_text(*current, RESERVED, "asm")) {
@@ -194,7 +194,7 @@ codeblock_t* parse_codeblock(lexertoken_t **current) {
             if (inner) {
                 statement_t *stmt = calloc(sizeof(statement_t), 1);
                 stmt->type = STMT_ASM;
-                stmt->asm = inner;
+                stmt->data.asm = inner;
                 add_to_block(code, stmt);
             }
         } else {
@@ -244,7 +244,7 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
         show_error(*current, "ERROR: Expected identifier");
         return 0;
     }
-    const char *mnemonic = (*current)->text;
+    const char *mnemonic = (*current)->data.text;
     advance(current);
 
     if (match(*current, COLON)) {
@@ -253,7 +253,7 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
         label->name = strdup(mnemonic);
 
         asmstmt_t *stmt = calloc(sizeof(asmstmt_t), 1);
-        stmt->label = label;
+        stmt->data.label = label;
         stmt->type = ASM_LABEL;
         return stmt;
     } else {
@@ -276,7 +276,7 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
             } else {
                 if (inst->operand_count < MAX_OPERANDS && match(*current, INTEGER)) {
                     inst->operands[inst->operand_count].type = OP_INTEGER;
-                    inst->operands[inst->operand_count].value = (*current)->integer;
+                    inst->operands[inst->operand_count].data.value = (*current)->data.integer;
                     ++inst->operand_count;
                     advance(current);
                 } else {
@@ -287,7 +287,7 @@ asmstmt_t* parse_asmstmt(lexertoken_t **current) {
         }
 
         asmstmt_t *stmt = calloc(sizeof(asmstmt_t), 1);
-        stmt->inst = inst;
+        stmt->data.inst = inst;
         stmt->type = ASM_INSTRUCTION;
         return stmt;
     }
