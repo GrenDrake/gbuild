@@ -206,11 +206,41 @@ void index_dictionary(symboltable_t *symbols) {
     }
 }
 
+unsigned hash_string(const char *text) {
+    unsigned hash = 0x811c9dc5;
+    size_t len = strlen(text);
+    for (size_t i = 0; i < len; ++i) {
+        hash ^= text[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
+int add_symbol(symboltable_t *table, symbol_t *symbol) {
+    unsigned bucket = hash_string(symbol->name) % SYMBOL_TABLE_BUCKETS;
+    symbol->next = table->symbol_buckets[bucket];
+    table->symbol_buckets[bucket] = symbol;
+    return 0;
+}
+
+symbol_t* get_symbol(symboltable_t *table, const char *symbol) {
+    unsigned bucket = hash_string(symbol) % SYMBOL_TABLE_BUCKETS;
+    symbol_t *cur = table->symbol_buckets[bucket];
+    while (cur) {
+        if (strcmp(cur->name, symbol) == 0) {
+            return cur;
+        }
+        cur = cur->next;
+    }
+    return 0;
+}
+
 void free_symbol_table(symboltable_t *table) {
     for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
         symbol_t *current = table->symbol_buckets[i];
         while (current) {
             symbol_t *next = current->next;
+            free(current->name);
             free(current);
             current = next;
         }

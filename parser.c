@@ -102,6 +102,12 @@ int parse_file(glulxfile_t *gamedata, tokenlist_t *tokens) {
                     gamedata->functions->prev = new_func;
                 }
                 gamedata->functions = new_func;
+                
+                symbol_t *symbol = calloc(sizeof(symbol_t), 1);
+                symbol->name = strdup(new_func->name);
+                symbol->type = SYM_FUNCTION;
+                symbol->data.func = new_func;
+                add_symbol(gamedata->global_symbols, symbol);
             } else {
                 has_errors = 1;
             }

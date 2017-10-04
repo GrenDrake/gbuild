@@ -10,6 +10,16 @@ void dump_codeblock(int depth, codeblock_t *code);
 void dump_function(function_t *function);
 
 
+void dump_symbols(int depth, symboltable_t *table) {
+    for (int i = 0; i < SYMBOL_TABLE_BUCKETS; ++i) {
+        symbol_t *symbol = table->symbol_buckets[i];
+        while (symbol) {
+            for (int j = 0; j < depth; ++j) printf("    ");
+            printf("SYM (%d) %s\n", symbol->type, symbol->name);
+            symbol = symbol->next;
+        }
+    }
+}
 void dump_statement(int depth, statement_t *stmt) {
     switch(stmt->type) {
         case STMT_ASM:
@@ -145,13 +155,13 @@ int main(int argc, char *argv[]) {
     }
 */
 
+    dump_symbols(0, gamefile->global_symbols);
     function_t *func = gamefile->functions;
     while (func) {
         dump_function(func);
         func = func->next;
     }
     dump_dictionary(gamefile->global_symbols);
-
 
     free_gamefile(gamefile);
     free_project(project);

@@ -57,6 +57,11 @@ enum asm_statement_type_t {
     ASM_LABEL
 };
 
+enum symbol_type_t {
+    SYM_FUNCTION,
+    SYM_LABEL
+};
+
 typedef struct DICT_WORD {
     char *word;
     unsigned index;
@@ -67,7 +72,10 @@ typedef struct DICT_WORD {
 typedef struct SYMBOL_INFO {
     char *name;
     int type;
-    int value;
+    union {
+        int value;
+        struct FUNCTION_DEF *func;
+    } data;
     unsigned position;
 
     struct SYMBOL_INFO *next;
@@ -232,6 +240,11 @@ mnemonic_t* get_mnemonic(const char *name);
 
 void add_dictionary_word(symboltable_t *table, const char *word);
 void index_dictionary(symboltable_t *symbols);
+
+unsigned hash_string(const char *text);
+int add_symbol(symboltable_t *table, symbol_t *symbol);
+symbol_t* get_symbol(symboltable_t *table, const char *symbol);
+
 void free_symbol_table(symboltable_t *table);
 void free_gamefile(glulxfile_t *what);
 void free_function(function_t *what);
